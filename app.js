@@ -153,8 +153,16 @@
     title.style.marginBottom = '6px';
     wrap.appendChild(title);
 
+    const listWrap = el('div');
+    wrap.appendChild(listWrap);
+
+    const addBtn = el('button','btn btn-add btn-small','+ add value');
+    addBtn.type='button';
+    addBtn.addEventListener('click', ()=>{ list.push({idx:String(list.length), value:''}); redraw(); onChange(); });
+    wrap.appendChild(addBtn);
+
     function redraw(){
-      wrap.querySelectorAll('.kv-row').forEach(r=>r.remove());
+      listWrap.innerHTML = '';
       list.forEach((item, i)=>{
         const row = el('div','kv-row');
         const idxInput = el('input'); idxInput.type='text'; idxInput.placeholder=placeholderKey; idxInput.value = item.idx;
@@ -165,12 +173,8 @@
         const rm = el('button','btn-remove','✕'); rm.type='button';
         rm.addEventListener('click', ()=>{ list.splice(i,1); redraw(); onChange(); });
         row.appendChild(idxInput); row.appendChild(valInput); row.appendChild(rm);
-        wrap.appendChild(row);
+        listWrap.appendChild(row);
       });
-      const addBtn = el('button','btn btn-add btn-small','+ add value');
-      addBtn.type='button';
-      addBtn.addEventListener('click', ()=>{ list.push({idx:String(list.length), value:''}); redraw(); onChange(); });
-      wrap.appendChild(addBtn);
     }
     redraw();
     return wrap;
@@ -181,8 +185,19 @@
     const title = el('div','hint','Buttons'); title.style.marginBottom='6px';
     wrap.appendChild(title);
 
+    const listWrap = el('div');
+    wrap.appendChild(listWrap);
+
+    const addBtn = el('button','btn btn-add btn-small','+ add button');
+    addBtn.type='button';
+    addBtn.addEventListener('click', ()=>{
+      list.push({type:'QUICK_REPLY', text:'', payload:'', index:list.length});
+      redraw(); onChange();
+    });
+    wrap.appendChild(addBtn);
+
     function redraw(){
-      wrap.querySelectorAll('.card').forEach(c=>c.remove());
+      listWrap.innerHTML = '';
       list.forEach((btn, i)=>{
         const card = el('div','card');
         card.style.padding = '12px';
@@ -237,15 +252,8 @@
         }
 
         card.appendChild(grid);
-        wrap.appendChild(card);
+        listWrap.appendChild(card);
       });
-      const addBtn = el('button','btn btn-add btn-small','+ add button');
-      addBtn.type='button';
-      addBtn.addEventListener('click', ()=>{
-        list.push({type:'QUICK_REPLY', text:'', payload:'', index:list.length});
-        redraw(); onChange();
-      });
-      wrap.appendChild(addBtn);
     }
     redraw();
     return wrap;
@@ -348,8 +356,19 @@
         const cardsTitle = el('div','hint','Cards'); cardsTitle.style.margin='10px 0 6px';
         cardsWrap.appendChild(cardsTitle);
 
+        const listWrap = el('div');
+        cardsWrap.appendChild(listWrap);
+
+        const addCard = el('button','btn btn-add btn-small','+ add card');
+        addCard.type='button';
+        addCard.addEventListener('click', ()=>{
+          state.cards.push({mediaUrl:'', mediaType:'IMAGE', parameterValues:[], buttons:[]});
+          redrawCards(); onChange();
+        });
+        cardsWrap.appendChild(addCard);
+
         function redrawCards(){
-          cardsWrap.querySelectorAll('.card.carousel-card').forEach(c=>c.remove());
+          listWrap.innerHTML = '';
           state.cards.forEach((card, i)=>{
             const c = el('div','card carousel-card');
             const head = el('div','card-head');
@@ -374,15 +393,8 @@
 
             c.appendChild(paramRowsEditor(c, card.parameterValues, 'parameterValues (card)', 'index', 'value', onChange));
             c.appendChild(buttonsEditor(card.buttons, onChange));
-            cardsWrap.appendChild(c);
+            listWrap.appendChild(c);
           });
-          const addCard = el('button','btn btn-add btn-small','+ add card');
-          addCard.type='button';
-          addCard.addEventListener('click', ()=>{
-            state.cards.push({mediaUrl:'', mediaType:'IMAGE', parameterValues:[], buttons:[]});
-            redrawCards(); onChange();
-          });
-          cardsWrap.appendChild(addCard);
         }
         redrawCards();
         holder.appendChild(cardsWrap);
@@ -834,7 +846,7 @@
     return errors;
   }
 
-  function renderCurl(){
+  function getRequestConfig(){
     const host = ($('host').value || '').replace(/\/$/, '');
     const token = $('authToken').value || '';
 
@@ -849,6 +861,11 @@
       endpoint = host + '/chatbird/api/message/send';
       body = buildSingleBody();
     }
+    return { host, token, endpoint, body };
+  }
+
+  function renderCurl(){
+    const { host, token, endpoint, body } = getRequestConfig();
 
     const jsonStr = jsonForCurl(body);
     const safeJson = shellSingleQuoteSafe(jsonStr);
@@ -876,9 +893,153 @@
     const box = $('errorBox');
     if(errors.length){
       box.innerHTML = `<div class="error-box"><b>Heads up — before you run this</b>${errors.map(e=>'• '+escapeHtml(e)).join('<br>')}</div>`;
+      $('sendRequestBtn').disabled = true;
     } else {
       box.innerHTML = '';
+      $('sendRequestBtn').disabled = false;
     }
+  }
+
+  function sendRequest(){
+    const { token, endpoint, body } = getRequestConfig();
+    const sendBtn = $('sendRequestBtn');
+    const responseTerm = $('responseTerminal');
+    const responseStatus = $('responseStatus');
+    const responseTime = $('responseTime');
+    const responseOutput = $('responseOutput');
+
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner"></span> Sending...';
+    responseTerm.style.display = 'none';
+
+    const startTime = performance.now();
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'authentication-token': token
+      },
+      body: JSON.stringify(body)
+    })
+    .then(async res => {
+      const duration = Math.round(performance.now() - startTime);
+      const text = await res.text();
+      
+      responseTerm.style.display = 'block';
+      responseTime.textContent = `${duration}ms`;
+      responseStatus.className = 'status-badge ' + (res.ok ? 'success' : 'error');
+      responseStatus.textContent = `${res.status} ${res.statusText || (res.ok ? 'OK' : 'Error')}`;
+      
+      try {
+        const parsed = JSON.parse(text);
+        responseOutput.textContent = JSON.stringify(parsed, null, 2);
+      } catch(e) {
+        responseOutput.textContent = text || '(empty response body)';
+      }
+    })
+    .catch(err => {
+      const duration = Math.round(performance.now() - startTime);
+      responseTerm.style.display = 'block';
+      responseTime.textContent = `${duration}ms`;
+      responseStatus.className = 'status-badge error';
+      responseStatus.textContent = 'Error';
+      
+      responseOutput.innerHTML = `<span style="color: var(--rust); font-weight: bold; display: block; margin-bottom: 8px;">Failed to send request: ${escapeHtml(err.message)}</span>
+<span style="color: var(--muted-2); line-height: 1.5; display: block;">This is likely due to CORS restrictions when calling external APIs from a local web browser page.
+
+<b>To run this request:</b> Copy the generated cURL command above and execute it in your terminal.</span>`;
+    })
+    .finally(() => {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '⚡ Send Request';
+    });
+  }
+
+  function findTokenInResponse(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    if (typeof obj.token === 'string') return obj.token;
+    if (typeof obj.authToken === 'string') return obj.authToken;
+    if (typeof obj.accessToken === 'string') return obj.accessToken;
+    
+    for (let key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        if (key.toLowerCase().includes('token') && typeof obj[key] === 'string') {
+          return obj[key];
+        }
+        if (typeof obj[key] === 'object') {
+          const found = findTokenInResponse(obj[key]);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  function performLogin(){
+    const host = ($('host').value || '').replace(/\/$/, '');
+    const email = $('loginEmail').value.trim();
+    const password = $('loginPassword').value.trim();
+    const status = $('loginStatus');
+    const loginBtn = $('doLoginBtn');
+
+    if (!email || !password) {
+      status.textContent = 'Enter email & password';
+      status.style.color = 'var(--rust)';
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
+    status.textContent = '';
+    status.style.color = 'var(--muted-2)';
+
+    const loginUrl = `${host}/account/enterprise/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+    fetch(loginUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: ''
+    })
+    .then(async res => {
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} ${res.statusText || 'Error'}`);
+      }
+
+      let token = null;
+      try {
+        const parsed = JSON.parse(text);
+        token = findTokenInResponse(parsed);
+      } catch(e) {
+        if (text && text.trim().length > 10 && !text.includes('<html')) {
+          token = text.trim();
+        }
+      }
+
+      if (token) {
+        $('authToken').value = token;
+        $('authToken').dispatchEvent(new Event('input'));
+        status.textContent = 'Token retrieved successfully!';
+        status.style.color = 'var(--green)';
+        setTimeout(() => {
+          $('loginPanel').style.display = 'none';
+          status.textContent = '';
+        }, 1500);
+      } else {
+        throw new Error('Token not found in response');
+      }
+    })
+    .catch(err => {
+      status.textContent = err.message;
+      status.style.color = 'var(--rust)';
+    })
+    .finally(() => {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Get Token';
+    });
   }
 
   // ============================================================
@@ -927,6 +1088,17 @@
       setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1400);
     });
   });
+
+  $('sendRequestBtn').addEventListener('click', sendRequest);
+
+  $('toggleLoginBtn').addEventListener('click', () => {
+    const panel = $('loginPanel');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    $('loginStatus').textContent = '';
+  });
+
+  $('doLoginBtn').addEventListener('click', performLogin);
 
   // init
   renderOneToManyMessageBuilder();
