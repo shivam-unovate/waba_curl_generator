@@ -638,40 +638,40 @@
   // PRESETS
   // ============================================================
   function loadPreset(name){
-    if(name === 'bulk-one-text'){
-      $('host').value = 'https://waba.vialogue.io';
-      $('authToken').value = 'n6IK2D562QrHAC+IlmCdOr4sG/Py3G1dqX/0XwZPAQQfXZJCEMLuKFgxM9RtZPcl';
-      switchMode('bulk-one');
-      $('channelId').value = '686e585a9b7d504221880f19';
-      $('fromBulk').value = '+919784565547';
-      $('toListText').value = '+919855546565\n+919856578557';
-      $('oneDeptId').value = '100';
-      $('oneCallbackUrl').value = 'https://webhook.site/93b6a56c-f8a3-4e4d-8ca0-360f83a03e8e';
-      const wrap = $('oneMsgBuilder');
-      wrap.querySelector('.tpl-chip').click(); // ensure plain text selected (first chip)
-      $('oneTextValue').value = 'common message to all users';
-      $('oneTextValue').dispatchEvent(new Event('input'));
-      oneMeta.length = 0; oneMeta.push({key:'tag1', value:'meta data 1'});
-      renderOneMeta();
-    }
-    if(name === 'bulk-one-template'){
-      $('host').value = 'https://waba.vialogue.io';
-      $('authToken').value = 'f2oAKACwSvjkGs16gXiMwp0D0bJvKbFrN8iilucIvnYfXZJCEMLuKFgxM9RtZPcl';
-      switchMode('bulk-one');
-      $('channelId').value = '6a0eb454d562cf53f93d6142';
-      $('fromBulk').value = '+918655952476';
-      $('bulkChannel').value = 'WhatsApp';
-      $('toListText').value = '+916261282518\n+919179223655\n+919868318802';
-      $('oneShortenUrl').value = 'true';
-      const wrap = $('oneMsgBuilder');
-      const state = wrap._getState().tplState;
-      state.templateId = 'downloadthereport_2026';
-      state.parameterValues = [{idx:'0', value:'AMAN'}];
-      state.buttons = [{type:'URL', text:'', payload:'https://lis.lordspath.com/LordLab/Application/ws_whatsapp_new/WhatsappPDF/NPL16173_Lord.pdf', index:0}];
-      wrap._useTemplateWithType('buttons'); // text template w/ parameterValues + a URL button
-      oneMeta.length = 0;
-      renderOneMeta();
-    }
+    // if(name === 'bulk-one-text'){
+    //   $('host').value = 'https://waba.vialogue.io';
+    //   $('authToken').value = 'n6IK2D562QrHAC+IlmCdOr4sG/Py3G1dqX/0XwZPAQQfXZJCEMLuKFgxM9RtZPcl';
+    //   switchMode('bulk-one');
+    //   $('channelId').value = '686e585a9b7d504221880f19';
+    //   $('fromBulk').value = '+919784565547';
+    //   $('toListText').value = '+919855546565\n+919856578557';
+    //   $('oneDeptId').value = '100';
+    //   $('oneCallbackUrl').value = 'https://webhook.site/93b6a56c-f8a3-4e4d-8ca0-360f83a03e8e';
+    //   const wrap = $('oneMsgBuilder');
+    //   wrap.querySelector('.tpl-chip').click(); // ensure plain text selected (first chip)
+    //   $('oneTextValue').value = 'common message to all users';
+    //   $('oneTextValue').dispatchEvent(new Event('input'));
+    //   oneMeta.length = 0; oneMeta.push({key:'tag1', value:'meta data 1'});
+    //   renderOneMeta();
+    // }
+    // if(name === 'bulk-one-template'){
+    //   $('host').value = 'https://waba.vialogue.io';
+    //   $('authToken').value = 'f2oAKACwSvjkGs16gXiMwp0D0bJvKbFrN8iilucIvnYfXZJCEMLuKFgxM9RtZPcl';
+    //   switchMode('bulk-one');
+    //   $('channelId').value = '6a0eb454d562cf53f93d6142';
+    //   $('fromBulk').value = '+918655952476';
+    //   $('bulkChannel').value = 'WhatsApp';
+    //   $('toListText').value = '+916261282518\n+919179223655\n+919868318802';
+    //   $('oneShortenUrl').value = 'true';
+    //   const wrap = $('oneMsgBuilder');
+    //   const state = wrap._getState().tplState;
+    //   state.templateId = 'downloadthereport_2026';
+    //   state.parameterValues = [{idx:'0', value:'AMAN'}];
+    //   state.buttons = [{type:'URL', text:'', payload:'https://lis.lordspath.com/LordLab/Application/ws_whatsapp_new/WhatsappPDF/NPL16173_Lord.pdf', index:0}];
+    //   wrap._useTemplateWithType('buttons'); // text template w/ parameterValues + a URL button
+    //   oneMeta.length = 0;
+    //   renderOneMeta();
+    // }
     renderCurl();
   }
 
